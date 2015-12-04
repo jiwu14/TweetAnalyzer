@@ -1,7 +1,27 @@
 import sys
 import codecs
 import ujson
+from nltk.stem import SnowballStemmer
+from nltk.corpus import stopwords
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import DBSCAN
+
+def preprocess_tweets(tweets):
+    stemmer = SnowballStemmer("english")
+    stop = stopwords.words("english")
+    tweet_texts = [ " ".join([ stemmer.stem(i)
+                                for i in tweet["text"].lower().split()
+                                if i not in stop ])
+                    for tweet in tweets ]
+    return tweet_texts
+
+def get_tfidf_vectors(tweets):
+    vectorizer = TfidfVectorizer()
+    return vectorizer.fit_transform(tweets)
+
+def cluster_DBSCAN(tweets_tfidf_matrix, minPts, eps):
+    clusterer = DBSCAN(eps=eps, min_samples=minPts, metric="cosine", algorithm="brute")
+    return clusterer.fit_predict(tweets_tfidf_matrix)
 
 def main():
     if len(sys.argv) == 4:
@@ -12,6 +32,13 @@ def main():
             with codecs.open(sys.argv[1], "r", "utf-8") as input_file:
                 tweets = [ ujson.loads(line) for line in input_file ]
                 print("Input data read")
+
+            tweets_preprocessed = preprocess_tweets(tweets)
+            tweets_tfidf_matrix = get_tfidf_vectors(tweets_preprocessed)
+            cluster_labels = cluster_DBSCAN(tweets_tfidf_matrix)
+
+            nclusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
+            print("%d clusters present in dataset" % nclusters)
         except ValueError:
             print("Invalid input values")
         except IOError:
