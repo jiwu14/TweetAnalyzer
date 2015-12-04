@@ -35,7 +35,7 @@ def main():
 
             tweets_preprocessed = preprocess_tweets(tweets)
             tweets_tfidf_matrix = get_tfidf_vectors(tweets_preprocessed)
-            cluster_labels = cluster_DBSCAN(tweets_tfidf_matrix)
+            cluster_labels = cluster_DBSCAN(tweets_tfidf_matrix, minPts, eps)
 
             nclusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
             print("%d clusters present in dataset" % nclusters)
