@@ -1,6 +1,7 @@
 import sys
 import codecs
 import ujson
+import itertools
 from nltk.stem import SnowballStemmer
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -39,6 +40,12 @@ def main():
 
             nclusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
             print("%d clusters present in dataset" % nclusters)
+
+            for cluster_label, cluster_tweets in itertools.groupby(zip(tweets, cluster_labels),
+                                                                    lambda x: x[1]):
+                print("\nCluster", "Noise" if cluster_label == -1 else cluster_label)
+                for cluster_tweet in cluster_tweets:
+                    print(cluster_tweet[0]["text"])
         except ValueError:
             print("Invalid input values")
         except IOError:
