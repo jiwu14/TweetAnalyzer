@@ -14,10 +14,10 @@ from sklearn.cluster import DBSCAN
 def preprocess_tweets(tweets):
     stemmer = SnowballStemmer("english")
     stop = set(stopwords.words("english"))
-    tweet_texts = [ " ".join([ stemmer.stem(i) if len(i) > 1 else i
+    tweet_texts = [ " ".join(stemmer.stem(i) if len(i) > 1 else i
                                 for i in ("".join(c for c in word if c not in string.punctuation)
                                             for word in tweet["text"].lower().split())
-                                if i and i not in stop ])
+                                if i and i not in stop)
                     for tweet in tweets ]
     return tweet_texts
 
