@@ -10,6 +10,7 @@ from scipy.sparse import csr_matrix
 from sklearn.metrics.pairwise import cosine_distances
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import DBSCAN
+from sklearn.cluster import AgglomerativeClustering
 from sklearn.metrics import silhouette_score
 
 def preprocess_tweets(tweets):
@@ -47,6 +48,10 @@ def cluster_DBSCAN(data, minPts, eps):
     #clusterer = DBSCAN(eps=eps, min_samples=minPts, metric="precomputed", algorithm="brute")
     return clusterer.fit_predict(data)
 
+def cluster_agglomerative(data, nclusters):
+    clusterer = AgglomerativeClustering(n_clusters=nclusters, affinity="cosine", linkage="complete")
+    return clusterer.fit_predict(data)
+
 def main():
     if len(sys.argv) == 4:
         try:
@@ -69,6 +74,7 @@ def main():
             nclusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
             print("%d clusters present in dataset" % nclusters)
 
+            #cluster_labels = cluster_agglomerative(tweets_tfidf_matrix.toarray(), nclusters + (1 if -1 in cluster_labels else 0))
             #s_score = silhouette_score(tweets_tfidf_matrix, cluster_labels, metric="cosine")
             #print("silhouette score: %f" % s_score)
 
