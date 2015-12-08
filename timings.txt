@@ -1,0 +1,3 @@
+samsung-all-en-5000.json 2.221s
+samsung-all-en-10000.json 4.630s
+samsung-all-en.json 6m33.576s
