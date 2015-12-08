@@ -21,7 +21,7 @@ def preprocess_tweets(tweets):
                                             for word in tweet["text"].lower().split())
                                 if i and i not in stop)
                     for tweet in tweets ]
-    return tweet_texts
+    return list(set(tweet_texts))
 
 def get_sparse_dist_matrix(tweets_tfidf_matrix, eps):
     """Get the sparse distance matrix from the pairwise cosine distance
@@ -43,9 +43,9 @@ def get_tfidf_vectors(tweets):
     vectorizer = TfidfVectorizer()
     return vectorizer.fit_transform(tweets)
 
-def cluster_DBSCAN(data, minPts, eps):
-    clusterer = DBSCAN(eps=eps, min_samples=minPts, metric="cosine", algorithm="brute")
-    #clusterer = DBSCAN(eps=eps, min_samples=minPts, metric="precomputed", algorithm="brute")
+def cluster_DBSCAN(data, minPts, eps, sparse_dist=False):
+    clusterer = DBSCAN(eps=eps, min_samples=minPts, metric="precomputed" if sparse_dist
+                                                    else "cosine", algorithm="brute")
     return clusterer.fit_predict(data)
 
 def cluster_agglomerative(data, nclusters):
@@ -53,22 +53,27 @@ def cluster_agglomerative(data, nclusters):
     return clusterer.fit_predict(data)
 
 def main():
-    if len(sys.argv) == 4:
+    if len(sys.argv) == 4 or len(sys.argv) == 5:
         try:
             minPts = int(sys.argv[2])
             eps = float(sys.argv[3])
+            sparse_dist = len(sys.argv) == 5 and sys.argv[4] == "sparse"
 
             with codecs.open(sys.argv[1], "r", "utf-8") as input_file:
                 tweets = [ ujson.loads(line) for line in input_file ]
-                print("Input data read")
+                print("%d json objects read" % len(tweets))
 
             tweets_preprocessed = preprocess_tweets(tweets)
-            print("Preprocessed data")
+            print("Preprocessed %d unique tweets" % len(tweets_preprocessed))
             tweets_tfidf_matrix = get_tfidf_vectors(tweets_preprocessed)
             print("Tfidf vectors generated")
-            #tweets_sparse_dist_matrix = get_sparse_dist_matrix(tweets_tfidf_matrix, eps)
-            #print("Sparse distance matrix generated")
-            cluster_labels = cluster_DBSCAN(tweets_tfidf_matrix, minPts, eps)
+
+            if sparse_dist:
+                tweets_sparse_dist_matrix = get_sparse_dist_matrix(tweets_tfidf_matrix, eps)
+                print("Sparse distance matrix generated")
+
+            cluster_labels = cluster_DBSCAN(tweets_sparse_dist_matrix if sparse_dist
+                                            else tweets_tfidf_matrix, minPts, eps, sparse_dist)
             print("Clustered with DBSCAN")
 
             nclusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
@@ -81,20 +86,20 @@ def main():
             clustered_tweets_grouped = ((cluster, list(cluster_t))
                                         for cluster, cluster_t in
                                             itertools.groupby(sorted(
-                                                                zip(tweets, cluster_labels),
+                                                                zip(tweets_preprocessed, cluster_labels),
                                                                 key=itemgetter(1)),
                                                             lambda x: x[1]))
 
             for cluster_label, cluster_tweets in itertools.islice(clustered_tweets_grouped, 1, None):
                 print("\nCluster", "Noise" if cluster_label == -1 else cluster_label)
                 for cluster_tweet in cluster_tweets:
-                    print(cluster_tweet[0]["text"])
+                    print(cluster_tweet[0])
         #except ValueError:
         #    print("Invalid input values")
         except IOError:
             print("Input file does not exist")
     else:
-        print("Usage: python %s file minPts epsilon" % sys.argv[0])
+        print("Usage: python %s file minPts epsilon [sparse]\n\"sparse\" - calculate a sparse distance matrix instead of using numpy" % sys.argv[0])
 
 if __name__ == "__main__":
     main()
