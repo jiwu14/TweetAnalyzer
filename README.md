@@ -7,3 +7,6 @@ REQUIRES:
    ujson  
    nltk  
 
+HOW TO RUN:
+   python3 -m TweetAnalyzer input_file min_points epsilon [sparse]
+
