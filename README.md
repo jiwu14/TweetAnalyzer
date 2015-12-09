@@ -2,6 +2,8 @@
 Analyze tweets for academic projects @ Cal Poly
 
 REQUIRES:
-   Python 3
-   scikit-learn
-   ujson
+   Python 3  
+   scikit-learn  
+   ujson  
+   nltk  
+
